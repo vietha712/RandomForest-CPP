@@ -4,60 +4,64 @@
 
 #include "../include/DecisionTree.h"
 
-int computeTure(vector<int> &samplesVec, Data &Data) {
+int computeTrue(int* pSamples, int samplesSize, Data &Data) {
     int total = 0;
-    for (auto each : samplesVec) {
-        total += Data.readTarget(each);
+    for (int i = 0; i < samplesSize; i++)
+    {
+        total += Data.readLabel(pSamples[i]);
     }
+
     return total;
 }
 
-double computeTargetProb(vector<int> &samplesVec, Data &Data) {
-    double num = 0;
+float computeTargetProb(int* pSamples, int samplesSize, Data &Data) {
+    float num = 0;
     int total = 0;
-    for (auto i : samplesVec) {
-        if (i != -1) {
-            num += Data.readTarget(i);
+    for (int i = 0; i < samplesSize; i++)
+    {
+        if (pSamples[i] != -1)
+        {
+            num += Data.readLabel(pSamples[i]);
             total++;
         }
     }
     return num / (total + 0.000000001);
 }
 
-double getSize(vector<int> &samples) {
-    double num = 0;
-    for (auto i : samples) {
-        if (i != -1) { num++; }
-    }
-    return num;
-}
+//float getSize(vector<int> &samples) {
+//    float num = 0;
+//    for (auto i : samples) {
+//        if (i != -1) { num++; }
+//    }
+//    return num;
+//}
 
-//double computeEntropy(vector<int> &samples, Data &Data) {
-//    double trueProb = computeTargetProb(samples, Data);
+//float computeEntropy(vector<int> &samples, Data &Data) {
+//    float trueProb = computeTargetProb(samples, Data);
 //    return -1 * (trueProb * log2(trueProb)
 //                 + (1 - trueProb) * log2((1 - trueProb)));
 //}
 
-double computeGini(int& sideTrue, int& sideSize) {
-    double trueProb = (sideTrue * 1.0) / (sideSize + 0.00000001);
+float computeGini(int& sideTrue, int& sideSize) {
+    float trueProb = (sideTrue * 1.0) / (sideSize + 0.00000001);
     return (1 - trueProb * trueProb - (1 - trueProb) * (1 - trueProb));
 }
 
-//double computeInformationGain(vector<int> &samples,
-//                              vector<int> &samplesLeft,
-//                              vector<int> &samplesRight,
+//float computeInformationGain(vector<int> &samples,
+//                              vector<int> &pSamplesLeft,
+//                              vector<int> &pSamplesRight,
 //                              Data &Data) {
 //    return -1 * computeEntropy(samples, Data)
-//           + ( getSize(samplesLeft) / getSize(samples))
-//             * computeEntropy(samplesLeft, Data)
-//           + (getSize(samplesRight) / getSize(samples))
-//             * computeEntropy(samplesRight, Data);
+//           + ( getSize(pSamplesLeft) / getSize(samples))
+//             * computeEntropy(pSamplesLeft, Data)
+//           + (getSize(pSamplesRight) / getSize(samples))
+//             * computeEntropy(pSamplesRight, Data);
 //}
 
-double computeGiniIndex(int& leftTrue, int& leftSize,
+float computeGiniIndex(int& leftTrue, int& leftSize,
                         int& rightTrue, int& rightSize) {
-    double leftProb = (leftSize * 1.0) / (leftSize + rightSize);
-    double rightprob = (rightSize * 1.0) / (leftSize + rightSize);
+    float leftProb = (leftSize * 1.0) / (leftSize + rightSize);
+    float rightprob = (rightSize * 1.0) / (leftSize + rightSize);
     return leftProb * computeGini(leftTrue, leftSize)
            + rightprob * computeGini(rightTrue, rightSize);
 }
@@ -74,80 +78,93 @@ int _none(int num) {
     return num;
 }
 
-set<double> DecisionTree::getValuesRange(int &featureIndex,
-                                         vector<int> &samplesVec,
-                                         Data &Data) {
-    set<double> featureRange;
-    for (auto sampleIndex : samplesVec) {
-        featureRange.insert(
-                Data.readFeature(sampleIndex, featureIndex));
-    }
-    return featureRange;
-}
+void DecisionTree::splitSamplesVec(int &featureIndex, float &threshold,
+                                   int* pSamples,
+                                   int  samplesSize,
+                                   int* pSamplesLeft,
+                                   int* pSampleLeftSize,
+                                   int* pSamplesRight,
+                                   int* pSampleRightSize,
+                                   Data &Data)
+{
+    *pSampleLeftSize = 0;
+    *pSampleRightSize = 0;
 
-void DecisionTree::splitSamplesVec(int &featureIndex, double &threshold,
-                                   vector<int> &samplesVec,
-                                   vector<int> &samplesLeft,
-                                   vector<int> &samplesRight, Data &Data) {
-    samplesLeft.clear();
-    samplesRight.clear();
-    for (auto samplesIndex : samplesVec) {
-        if (Data.readFeature(samplesIndex, featureIndex) >
-            threshold) {
-            samplesRight.push_back(samplesIndex);
-        } else {
-            samplesLeft.push_back(samplesIndex);
+    for (int i = 0; i < samplesSize; i++)
+    {
+        int idxSampleRight = 0;
+        int idxSampleLeft = 0;
+        if (Data.readFeature(pSamples[i], featureIndex) > threshold) 
+        {
+            pSamplesRight[idxSampleRight] = pSamples[i];
+            idxSampleRight++;
+            *pSampleRightSize += 1;
+        } 
+        else 
+        {
+            pSamplesLeft[idxSampleLeft] = pSamples[i];
+            idxSampleLeft++;
+            *pSampleLeftSize += 1;
         }
     }
 }
 
-void sortByFeatures(vector<pair<int, double>>& samplesFeaturesVec,
+void sortByFeatures(vector<pair<int, float>>& samplesFeaturesVec,
                     int featureIndex, Data& data) {
     for (int i = 0; i < samplesFeaturesVec.size(); i++) {
         samplesFeaturesVec[i].second
                 = data.readFeature(samplesFeaturesVec[i].first, featureIndex);
     }
     sort(samplesFeaturesVec.begin(), samplesFeaturesVec.end(), [](pair<int,
-    double>& a, pair<int, double>& b) {
+    float>& a, pair<int, float>& b) {
         return a.second < b.second;
     });
 }
 
-void DecisionTree::chooseBestSplitFeatures(shared_ptr<Node> &node,
-                                           vector<int> &samplesVec,
-                                           Data &Data) {
+void DecisionTree::chooseBestSplitFeatures(Node* pNode,
+                                           int* pSamples,
+                                           int samplesSize,
+                                           Data &Data)
+{
     vector<int> featuresVec = Data.generateFeatures(this->maxFeatureFunc);
     int bestFeatureIndex = featuresVec[0];
-    int samplesTrueNum = computeTure(samplesVec, Data);
-    double minValue = 1000000000, bestThreshold = 0;
-    double threshold = 0;
+    int samplesTrueNum = computeTrue(pSamples, samplesSize, Data);
+    float minValue = 1000000000, bestThreshold = 0;
+    float threshold = 0;
     int sampleIndex;
-    vector<pair<int, double>> samplesFeaturesVec;
-    samplesFeaturesVec.reserve(samplesVec.size());
-    for (auto index : samplesVec) {
-        samplesFeaturesVec.emplace_back(index, 0);
+
+    vector<pair<int, float>> samplesFeaturesVec;
+    samplesFeaturesVec.reserve(samplesSize);
+
+    for (int i = 0; i < samplesSize; i++)
+    {
+        samplesFeaturesVec.emplace_back(pSamples[i], 0);
     }
 
     for (auto featureIndex : featuresVec) {
         sortByFeatures(samplesFeaturesVec, featureIndex, Data);
-        int leftSize = 0, rightSize = (int)samplesVec.size();
+        int leftSize = 0, rightSize = samplesSize;
         int leftTrue = 0, rightTrue = samplesTrueNum;
-        for (int index = 0; index < samplesFeaturesVec.size();) {
+
+        for (int index = 0; index < samplesFeaturesVec.size();)
+        {
             sampleIndex = samplesFeaturesVec[index].first;
             threshold = samplesFeaturesVec[index].second;
-            while (index < samplesVec.size() &&
-                   samplesFeaturesVec[index].second <= threshold) {
+
+            while ((index < samplesSize) && (samplesFeaturesVec[index].second <= threshold)) 
+            {
                 leftSize++;
                 rightSize--;
-                if (Data.readTarget(sampleIndex) == 1) {
+                if (Data.readLabel(sampleIndex) == 1)
+                {
                     leftTrue++;
                     rightTrue--;
                 }
                 index++;
                 sampleIndex = samplesFeaturesVec[index].first;
             }
-            if (index == samplesVec.size()) { continue; }
-            double value = criterionFunc(leftTrue, leftSize, rightTrue, rightSize);
+            if (index == samplesSize) { continue; }
+            float value = criterionFunc(leftTrue, leftSize, rightTrue, rightSize);
             if (value <= minValue) {
                 minValue = value;
                 bestThreshold = threshold;
@@ -155,39 +172,58 @@ void DecisionTree::chooseBestSplitFeatures(shared_ptr<Node> &node,
             }
         }
     }
-    node->featureIndex = bestFeatureIndex;
-    node->threshold = bestThreshold;
+    pNode->featureIndex = bestFeatureIndex;
+    pNode->threshold = bestThreshold;
 }
 
-shared_ptr<DecisionTree::Node>
-DecisionTree::constructNode(vector<int> &samplesVec,
-                            Data &trainData,
-                            int depth) {
-    double targetProb = computeTargetProb(samplesVec, trainData);
-    shared_ptr<Node> node(new Node());
-    node->depth = depth;
-    node->prob = 0;
-    if (targetProb == 0 || targetProb == 1 ||
-        samplesVec.size() <= minSamplesSplit || depth == maxDepth) {
-        node->isLeaf = true;
-        node->prob = targetProb;
-    } else {
-        chooseBestSplitFeatures(node, samplesVec, trainData);
-        vector<int> sampleLeft, sampleRight;
-        splitSamplesVec(node->featureIndex, node->threshold, samplesVec,
-                        sampleLeft, sampleRight, trainData);
-        if ((sampleLeft.size() < minSamplesLeaf) or
-            (sampleRight.size() < minSamplesLeaf)) {
-            node->isLeaf = true;
-            node->prob = targetProb;
-        } else {
-            node->left = constructNode(sampleLeft, trainData,
-                    depth + 1);
-            node->right = constructNode(sampleRight, trainData,
-                    depth + 1);
+Node* DecisionTree::constructNode(int* pSamples,
+                                  int sampleSize,
+                                  Data &trainData,
+                                  int depth)
+{
+    float targetProb = computeTargetProb(pSamples, sampleSize, trainData);
+    int sampleLeft[50000];
+    int sampleRight[50000];
+    int* pSamplesLeft = sampleLeft;
+    int* pSamplesRight = sampleRight;
+    Node* pNode = new Node();
+
+    pNode->depth = depth;
+    pNode->prob = 0;
+    int sampleLeftSize = 0;
+    int sampleRightSize = 0;
+    if ((targetProb == 0 )|| (targetProb == 1) ||
+        (sampleSize <= minSamplesSplit) || (depth == maxDepth)) 
+    {
+        pNode->isLeaf = true;
+        pNode->prob = targetProb;
+    } 
+    else 
+    {
+        chooseBestSplitFeatures(pNode, pSamples, sampleSize, trainData);
+
+        splitSamplesVec(pNode->featureIndex,
+                        pNode->threshold,
+                        pSamples,
+                        sampleSize,
+                        pSamplesLeft,
+                        &sampleLeftSize,
+                        pSamplesRight,
+                        &sampleRightSize,
+                        trainData);
+
+        if ((sampleLeftSize < minSamplesLeaf) || (sampleRightSize < minSamplesLeaf)) 
+        {
+            pNode->isLeaf = true;
+            pNode->prob = targetProb;
+        } 
+        else 
+        {
+            pNode->pLeft = constructNode(pSamplesLeft, sampleLeftSize, trainData, depth + 1);
+            pNode->pRight = constructNode(pSamplesRight, sampleRightSize, trainData, depth + 1);
         }
     }
-    return node;
+    return pNode;
 
 }
 
@@ -219,24 +255,25 @@ DecisionTree::DecisionTree(const string &criterion,
 }
 
 void DecisionTree::fit(Data &trainData) {
-    vector<int> samplesVec = trainData.generateSample(this->sampleNum);
-    root = constructNode(samplesVec, trainData, 0);
+    int pSamples[50000];
+    pSamples = trainData.generateSample(this->sampleNum);
+    pRoot = constructNode(pSamples, this->sampleNum, trainData, 0);
 }
 
-double DecisionTree::computeProb(int sampleIndex, Data &Data) {
-    auto node = root;
+float DecisionTree::computeProb(int sampleIndex, Data &Data) {
+    auto node = pRoot;
     while (!node->isLeaf) {
-        if (Data.readFeature(sampleIndex, node->featureIndex) >
-            node->threshold) {
-            node = node->right;
+        if (Data.readFeature(sampleIndex, node->featureIndex) > node->threshold) 
+        {
+            node = node->pRight;
         } else {
-            node = node->left;
+            node = node->pLeft;
         }
     }
     return node->prob;
 }
 
-void DecisionTree::predictProba(Data &Data, vector<double> &results) {
+void DecisionTree::predictProba(Data &Data, vector<float> &results) {
     for (int i = 0; i < results.size(); i++) {
         results[i] += computeProb(i, Data);
     }

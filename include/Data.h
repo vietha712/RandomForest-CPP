@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <ctime>
 #include <functional>
-#include <algorithm>
+#include <iterator>
 
 using namespace std;
 
@@ -24,22 +24,24 @@ vector<string> splitBySpace(string &sentence);
 
 class Data {
 private:
-    vector<vector<double>> features;
+    vector<vector<float>> features;
     vector<int> target;
     int featureSize = 0;
     int samplesSize = 0;
     bool isTrain;
     vector<int> featuresVec;
-    vector<int> samplesVec;
+    vector<int> pSamples;
 
 public:
-    Data(bool isTrain = true, int size = 1719692, int featuresSize = 201);
+    Data(bool isTrain, int size, int featuresSize);
 
     void read(const string &filename);
 
-    double readFeature(int sampleIndex, int featureIndex);
+    void read(const string &filename, vector<int> &idx);
 
-    int readTarget(int sampleIndex);
+    float readFeature(int sampleIndex, int featureIndex);
+
+    int readLabel(int sampleIndex);
 
     int getSampleSize();
 
@@ -49,10 +51,15 @@ public:
 
     vector<int> generateFeatures(function<int(int)> &func);
 
-    void sortByFeature(vector<int> &samplesVec, int featureIndex);
+    void sortByFeature(vector<int> &pSamples, int featureIndex);
 };
 
-void writeDataToCSV(vector<double> &results,
+void writeDataToCSV(vector<float> &results,
+                    Data &data,
+                    const string &filename,
+                    bool train);
+
+void writeDataToCSV(vector<int> &results,
                     Data &data,
                     const string &filename,
                     bool train);

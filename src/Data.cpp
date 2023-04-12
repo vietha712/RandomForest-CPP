@@ -10,7 +10,7 @@ vector<string> splitBySpace(string &sentence) {
                           istream_iterator<string>{}};
 }
 
-void writeDataToCSV(vector<double> &results, Data &data,
+void writeDataToCSV(vector<float> &results, Data &data,
                     const string &filename, bool train) {
     ofstream out(filename);
     if (out.is_open()) {
@@ -20,7 +20,29 @@ void writeDataToCSV(vector<double> &results, Data &data,
         for (auto each : results) {
             out << i << "," << each;
             if (train) {
-                out << "," << data.readTarget(i) << "\n";
+                out << "," << data.readLabel(i) << "\n";
+            } else {
+                out << "\n";
+            }
+            i++;
+        }
+        out.close();
+    } else {
+        cout << "Write File failed" << endl;
+    }
+}
+
+void writeDataToCSV(vector<int> &results, Data &data,
+                    const string &filename, bool train) {
+    ofstream out(filename);
+    if (out.is_open()) {
+        out << "id,label";
+        if (train) { out << ",real\n"; } else { out << "\n"; }
+        int i = 0;
+        for (auto each : results) {
+            out << i << "," << each;
+            if (train) {
+                out << "," << data.readLabel(i) << "\n";
             } else {
                 out << "\n";
             }
@@ -34,8 +56,11 @@ void writeDataToCSV(vector<double> &results, Data &data,
 
 Data::Data(bool isTrain, int size, int featuresSize) {
     this->featureSize = featuresSize;
+    this->samplesSize = size;
+
     features.reserve(size);
-    samplesVec.reserve(size);
+    pSamples.reserve(size);
+
     if (isTrain) { target.reserve(size); }
     this->isTrain = isTrain;
 }
@@ -43,33 +68,76 @@ Data::Data(bool isTrain, int size, int featuresSize) {
 void Data::read(const string &filename) {
     ifstream inputFile;
     inputFile.open(filename.c_str());
+
     if (!inputFile.is_open()) { cout << "Failed Open" << endl; }
     string str;
-    int startIndex = this->isTrain ? 1 : 0;
-    while (getline(inputFile, str)) {
+
+    for (int i = 0; i < this->samplesSize; i++)
+    {
+        (void)getline(inputFile, str);
         auto results = splitBySpace(str);
-        vector<double> sample(this->featureSize, 0);
-        for (int i = startIndex; i < results.size(); i++) {
-            int key = atoi(
-                    results[i].substr(0, results[i].find(":")).c_str());
-            double value = atof(results[i].substr(
-                    results[i].find(":") + 1).c_str());
-            sample[key] = value;
+
+        if (this->featureSize != (results.size() - 1))
+            cout << "FEAT_SIZE diff parsed feat: " << results.size() << endl;
+        vector<float> sample(this->featureSize, 0);
+        for (int i = 0; i < this->featureSize; i++)
+        {
+            sample[i] = stod(results[i]);
         }
         this->features.push_back(sample);
-        if (this->isTrain) { target.push_back(atoi(results[0].c_str())); }
-        samplesVec.push_back(this->samplesSize++);
+        if (this->isTrain)
+        {
+            /* The last member store the label [0, 1] */
+            target.push_back(atoi(results[this->featureSize].c_str()));
+        }
+        pSamples.push_back(i);
     }
     inputFile.close();
     featuresVec.reserve(this->featureSize);
-    for (int i = 0; i < featureSize; i++) { featuresVec.push_back(i); }
+    for (int i = 0; i < featureSize; i++)
+    {
+        featuresVec.push_back(i);
+    }
 }
 
-double Data::readFeature(int sampleIndex, int featureIndex) {
+void Data::read(const string &filename, vector<int> &idx) {
+    ifstream inputFile;
+    inputFile.open(filename.c_str());
+
+    if (!inputFile.is_open()) { cout << "Failed Open" << endl; }
+    string str;
+
+    for (int i = 0; i < this->samplesSize; i++)
+    {
+        (void)getline(inputFile, str);
+        auto results = splitBySpace(str);
+
+        vector<float> sample(this->featureSize, 0);
+        for (int i = 0; i < this->featureSize; i++)
+        {
+            sample[i] = stod(results[idx[i]]);
+        }
+        this->features.push_back(sample);
+        if (this->isTrain)
+        {
+            /* The last member store the label [0, 1] */
+            target.push_back(atoi(results[this->featureSize].c_str()));
+        }
+        pSamples.push_back(i);
+    }
+    inputFile.close();
+    featuresVec.reserve(this->featureSize);
+    for (int i = 0; i < featureSize; i++)
+    {
+        featuresVec.push_back(i);
+    }
+}
+
+float Data::readFeature(int sampleIndex, int featureIndex) {
     return features[sampleIndex][featureIndex];
 }
 
-int Data::readTarget(int sampleIndex) {
+int Data::readLabel(int sampleIndex) {
     return target[sampleIndex];
 }
 
@@ -83,10 +151,10 @@ int Data::getFeatureSize() {
 
 vector<int> Data::generateSample(int &num) {
     if (num == -1) {
-        return samplesVec;
+        return pSamples;
     } else {
-        random_shuffle(samplesVec.begin(), samplesVec.end());
-        return vector<int>(samplesVec.begin(), samplesVec.begin() + num);
+        random_shuffle(pSamples.begin(), pSamples.end());
+        return vector<int>(pSamples.begin(), pSamples.begin() + num);
     }
 }
 
@@ -96,8 +164,8 @@ vector<int> Data::generateFeatures(function<int(int)> &func) {
     return vector<int>(featuresVec.begin(), featuresVec.begin() + m);
 }
 
-void Data::sortByFeature(vector<int> &samplesVec, int featureIndex) {
-    sort(samplesVec.begin(), samplesVec.end(), [&](int a, int b) {
+void Data::sortByFeature(vector<int> &pSamples, int featureIndex) {
+    sort(pSamples.begin(), pSamples.end(), [&](int a, int b) {
         return this->readFeature(a, featureIndex) <
                this->readFeature(b, featureIndex);
     });

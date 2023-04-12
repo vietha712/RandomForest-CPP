@@ -14,18 +14,18 @@
 
 using namespace std;
 
-double computeTargetProb(vector<int> &samplesVec, Data &Data);
+float computeTargetProb(int* pSamples, int samplesSize, Data &Data);
 
-//double computeEntropy(vector<int> &samples, Data &Data);
+float computeEntropy(vector<int> &samples, Data &Data);
 
-double computeGini(int &, int &);
+float computeGini(int &, int &);
 
-//double computeInformationGain(vector<int> &samples,
-//                              vector<int> &samplesLeft,
-//                              vector<int> &samplesRight,
+//float computeInformationGain(vector<int> &samples,
+//                              vector<int> &pSamplesLeft,
+//                              vector<int> &pSamplesRight,
 //                              Data &Data);
 
-double computeGiniIndex(int &, int &, int &, int &);
+float computeGiniIndex(int &, int &, int &, int &);
 
 int _sqrt(int num);
 
@@ -33,48 +33,60 @@ int _log2(int num);
 
 int _none(int num);
 
+struct Node {
+    int featureIndex;
+    Node* pLeft;
+    Node* pRight;
+    float threshold;
+    bool isLeaf;
+    int depth;
+    float prob;
+    Node() {
+        pLeft = nullptr;
+        pRight = nullptr;
+        isLeaf = false;
+    }
+};
+
 class DecisionTree {
 private:
-    struct Node {
-        int featureIndex;
-        shared_ptr<Node> left;
-        shared_ptr<Node> right;
-        double threshold;
-        bool isLeaf;
-        int depth;
-        double prob;
-
-        Node() {
-            left = nullptr;
-            right = nullptr;
-            isLeaf = false;
-        }
-    };
-
     int featureNum;
     int maxDepth;
     int minSamplesSplit;
     int minSamplesLeaf;
     int sampleNum;
-    function<double(int&, int&, int&, int&)> criterionFunc;
+    function<float(int&, int&, int&, int&)> criterionFunc;
     function<int(int)> maxFeatureFunc;
-    shared_ptr<Node> root;
+    Node* pRoot;
 
-    set<double> getValuesRange(int &featureIndex,
-                               vector<int> &samplesVec,
-                               Data &Data);
+    void splitSamplesVec(int &featureIndex, 
+                         float &threshold,
+                         int* pSamples,
+                         int  samplesSize,
+                         int* pSamplesLeft,
+                         int* pSampleLeftSize,
+                         int* pSamplesRight,
+                         int* pSampleRightSize,
+                         Data &Data);
 
-    void splitSamplesVec(int &featureIndex, double &threshold,
-                         vector<int> &samplesVec, vector<int> &samplesLeft,
-                         vector<int> &samplesRight, Data &Data);
-
-    void chooseBestSplitFeatures(shared_ptr<Node> &node,
-                                 vector<int> &samplesVec,
+    void chooseBestSplitFeatures(Node* pNode,
+                                 int* pSamples,
+                                 int samplesSize,
                                  Data &Data);
 
-    shared_ptr<Node> constructNode(vector<int> &sampleVec,
-                                   Data &trainData,
-                                   int depth);
+    Node* constructNode(int* pSamples,
+                        int samplesSize,
+                        Data &trainData,
+                        int depth);
+
+    Node* constructNode(int* pSamples,
+                        int sampleSize,
+                        int* pSamplesRight,
+                        int sampleRightSize,
+                        int* pSamplesLeft,
+                        int sampleLeftSize,
+                        Data &trainData,
+                        int depth);
 
 public:
     /**
@@ -103,9 +115,9 @@ public:
 
     void fit(Data &trainData);
 
-    double computeProb(int sampleIndex, Data &Data);
+    float computeProb(int sampleIndex, Data &Data);
 
-    void predictProba(Data &Data, vector<double> &results);
+    void predictProba(Data &Data, float* results);
 };
 
 #endif //RANDOMFOREST_DECISIONTREE_H
