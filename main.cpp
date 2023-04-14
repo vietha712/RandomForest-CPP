@@ -2,10 +2,6 @@
 #include "include/Data.h"
 #include "include/RandomForest.h"
 
-#define TRAIN_SAMPLE_SIZE 50000
-#define TEST_SAMPLE_SIZE 10000
-#define FEATURE_SIZE 122
-
 int main() {
     /* This is for testing function read by index. Using all the index to simulate normal read data */
     vector<int> vect1;
@@ -28,12 +24,14 @@ int main() {
     testData.read("../data/std_scale_dos_test.txt", vect1); // Failed here
     cout << "Read test data success: " << endl;
 
-    auto results = randomForest.predictProba(testData);
-    writeDataToCSV(results, testData, "../results/trainResults.csv", false);
+    float proba[TEST_SAMPLE_SIZE];
+    randomForest.predictProba(testData, proba);
+    //writeDataToCSV(proba, testData, "../results/trainResults.csv", false);
     cout << "Predict probabilities success" << endl;
     
-    auto predictedLabel = randomForest.predict(testData);
-    writeDataToCSV(predictedLabel, testData, "../results/testResults.csv", false);
+    int predictedLabel[TEST_SAMPLE_SIZE];
+    randomForest.predict(testData, predictedLabel);
+    //writeDataToCSV(predictedLabel, testData, "../results/testResults.csv", false);
     cout << "Predict success" << endl;
 
     randomForest.calculateMetrics(testData, predictedLabel);

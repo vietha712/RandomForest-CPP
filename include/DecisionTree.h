@@ -79,15 +79,6 @@ private:
                         Data &trainData,
                         int depth);
 
-    Node* constructNode(int* pSamples,
-                        int sampleSize,
-                        int* pSamplesRight,
-                        int sampleRightSize,
-                        int* pSamplesLeft,
-                        int sampleLeftSize,
-                        Data &trainData,
-                        int depth);
-
 public:
     /**
      *
@@ -117,7 +108,7 @@ public:
 
     float computeProb(int sampleIndex, Data &Data);
 
-    void predictProba(Data &Data, float* results);
+    void predictProba(Data &Data, float* pResults, int resultSize);
 };
 
 #endif //RANDOMFOREST_DECISIONTREE_H

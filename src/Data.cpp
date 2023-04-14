@@ -3,6 +3,7 @@
 //
 
 #include "../include/Data.h"
+#include "../include/utils.h"
 
 vector<string> splitBySpace(string &sentence) {
     istringstream iss(sentence);
@@ -59,7 +60,7 @@ Data::Data(bool isTrain, int size, int featuresSize) {
     this->samplesSize = size;
 
     features.reserve(size);
-    pSamples.reserve(size);
+    sampleVector.reserve(size);
 
     if (isTrain) { target.reserve(size); }
     this->isTrain = isTrain;
@@ -90,7 +91,7 @@ void Data::read(const string &filename) {
             /* The last member store the label [0, 1] */
             target.push_back(atoi(results[this->featureSize].c_str()));
         }
-        pSamples.push_back(i);
+        sampleVector.push_back(i);
     }
     inputFile.close();
     featuresVec.reserve(this->featureSize);
@@ -123,7 +124,7 @@ void Data::read(const string &filename, vector<int> &idx) {
             /* The last member store the label [0, 1] */
             target.push_back(atoi(results[this->featureSize].c_str()));
         }
-        pSamples.push_back(i);
+        sampleVector.push_back(i);
     }
     inputFile.close();
     featuresVec.reserve(this->featureSize);
@@ -149,22 +150,52 @@ int Data::getFeatureSize() {
     return featureSize;
 }
 
-vector<int> Data::generateSample(int &num) {
-    if (num == -1) {
-        return pSamples;
-    } else {
-        random_shuffle(pSamples.begin(), pSamples.end());
-        return vector<int>(pSamples.begin(), pSamples.begin() + num);
+//vector<int> Data::generateSample(int &num) {
+//    if (num == -1) {
+//        return pSamples;
+//    } else {
+//        random_shuffle(pSamples.begin(), pSamples.end());
+//        return vector<int>(pSamples.begin(), pSamples.begin() + num);
+//    }
+//}
+
+void Data::generateSample(int* pSamples, int &num) {
+    if (num == -1)
+    {
+        return;
+    } 
+    else 
+    {
+        for (int i = 0; i < samplesSize; i++)
+            pSamples[i] = sampleVector[i];
+        randomize(pSamples, num);
     }
 }
 
-vector<int> Data::generateFeatures(function<int(int)> &func) {
+//vector<int> Data::generateFeatures(function<int(int)> &func) {
+//    int m = func(this->getFeatureSize());
+    //random_shuffle(featuresVec.begin(), featuresVec.end());
+    //return vector<int>(featuresVec.begin(), featuresVec.begin() + m);
+//}
+
+void Data::generateFeatures(function<int(int)> &func, int* pFeatVector)
+{
+    int tempVec[FEATURE_SIZE];
     int m = func(this->getFeatureSize());
-    random_shuffle(featuresVec.begin(), featuresVec.end());
-    return vector<int>(featuresVec.begin(), featuresVec.begin() + m);
+
+    for (int i = 0; i < featureSize; i++)
+        tempVec[i] = featuresVec[i];
+
+    randomize(tempVec, this->getFeatureSize());
+    for (int i = 0; i < featureSize; i++)
+        featuresVec[i] = tempVec[i];
+
+    for (int i = 0; i < m; i++)
+        pFeatVector[i] = tempVec[i];
 }
 
-void Data::sortByFeature(vector<int> &pSamples, int featureIndex) {
+void Data::sortByFeature(vector<int> &pSamples, int featureIndex)
+{
     sort(pSamples.begin(), pSamples.end(), [&](int a, int b) {
         return this->readFeature(a, featureIndex) <
                this->readFeature(b, featureIndex);

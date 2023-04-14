@@ -38,7 +38,7 @@ private:
     measurement measurementRecords;
 
 
-    void norm(vector<float> &total);
+    void norm(float* pTotal, int size) ;
     vector<int> getTruePositive(Data &Data);
 
 
@@ -83,11 +83,11 @@ public:
 
     void fit(Data &trainData);
 
-    vector<float> predictProba(Data &Data);
+    void predictProba(Data &Data, float* pResult);
 
-    vector<int> predict(Data &Data);
+    void predict(Data &Data, int* pPredictedValue);
 
-    void calculateMetrics(Data &testData, vector<int> &predictedValue);
+    void calculateMetrics(Data &testData, int* pPredictedValue);
     float getAccuracy(void);
     float getRecall(void);
     float getPrecision(void);

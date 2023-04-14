@@ -19,6 +19,9 @@
 #include <iterator>
 
 using namespace std;
+#define TRAIN_SAMPLE_SIZE 50000
+#define TEST_SAMPLE_SIZE 10000
+#define FEATURE_SIZE 122
 
 vector<string> splitBySpace(string &sentence);
 
@@ -30,7 +33,7 @@ private:
     int samplesSize = 0;
     bool isTrain;
     vector<int> featuresVec;
-    vector<int> pSamples;
+    vector<int> sampleVector;
 
 public:
     Data(bool isTrain, int size, int featuresSize);
@@ -48,8 +51,10 @@ public:
     int getFeatureSize();
 
     vector<int> generateSample(int &num);
+    void generateSample(int* pSamples, int &num);
 
     vector<int> generateFeatures(function<int(int)> &func);
+    void generateFeatures(function<int(int)> &func, int* pFeatVector);
 
     void sortByFeature(vector<int> &pSamples, int featureIndex);
 };

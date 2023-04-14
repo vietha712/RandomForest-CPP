@@ -3,25 +3,28 @@
 //
 
 #include "../include/RandomForest.h"
-
+#define MAX_TREE 250
 void RandomForest::fit(Data &trainData)
 {
-    std::vector<DecisionTree> results;
+    DecisionTree results[MAX_TREE];
     for (int i = 0; i < nEstimators; i++)
     {
         DecisionTree tree(criterion, maxDepth, minSamplesSplit, minSamplesLeaf,
                           eachTreeSamplesNum, maxFeatures);
         tree.fit(trainData);
         cout << "Fitted Tree: " << i << endl;
-        results.emplace_back(tree);
+        results[i] = tree;
     }
 
-    for (int i = 0; i < results.size(); i++)
-        decisionTrees.push_back(results[i]);
+    for (int i = 0; i < nEstimators; i++)
+        decisionTrees[i] = results[i];
 }
 
-void RandomForest::norm(vector<float> &total) {
-    for (float &i : total) { i /= nEstimators; }
+void RandomForest::norm(float* pTotal, int size) {
+    for (int i = 0; i < size; i++) 
+    {
+        pTotal[i] /= nEstimators; 
+    }
 }
 
 void vecAdd(vector<float> &total, vector<float> &part) {
@@ -30,29 +33,33 @@ void vecAdd(vector<float> &total, vector<float> &part) {
     }
 }
 
-vector<float> RandomForest::predictProba(Data &Data) {
-    vector<float> results(Data.getSampleSize(), 0);
+void RandomForest::predictProba(Data &Data, float* pResult)
+{
+    for (int i = 0; i < Data.getSampleSize(); i++)
+        pResult[i] = 0.0;
+
     for (int i = 0; i < nEstimators; i++) {
-        decisionTrees[i].predictProba(Data, results);
+        decisionTrees[i].predictProba(Data, pResult, Data.getSampleSize());
         cout << "Predict Tree: " << i << endl;
     }
 
-    norm(results);
-    return results;
+    norm(pResult, Data.getSampleSize());
 }
 
-vector<int> RandomForest::predict(Data &Data) {
-    auto results = predictProba(Data);
+void RandomForest::predict(Data &Data, int* pPredictedValue) {
+    float results[TEST_SAMPLE_SIZE];
+
+    predictProba(Data, results);
+
     cout << "Sample size: " << Data.getSampleSize() << endl;
-    vector<int> label(Data.getSampleSize(), 0);
+
     for (int i = 0; i < Data.getSampleSize(); i++)
     {
-        label[i] = (results[i] > 0.6) ? 1 : 0;
+        pPredictedValue[i] = (results[i] > 0.6) ? 1 : 0;
     }
-    return label;
 }
 
-void RandomForest::calculateMetrics(Data &testData, vector<int> &predictedValue)
+void RandomForest::calculateMetrics(Data &testData, int* pPredictedValue)
 {
     /* The label was placed in the last column of data set */
     this->measurementRecords.truePositive = 0;
@@ -65,14 +72,14 @@ void RandomForest::calculateMetrics(Data &testData, vector<int> &predictedValue)
         unsigned int label = testData.readLabel(i);
         if (1 == label)
         {
-            if (predictedValue[i] == label)
+            if (pPredictedValue[i] == label)
                 this->measurementRecords.truePositive++;
             else
                 this->measurementRecords.falseNegative++;
         }
         else
         {
-            if (predictedValue[i] == label)
+            if (pPredictedValue[i] == label)
                 this->measurementRecords.trueNegative++;
             else
                 this->measurementRecords.falsePositive++;
