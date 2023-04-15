@@ -29,38 +29,14 @@ float computeTargetProb(int* pSamples, int samplesSize, Data &Data) {
     return num / (total + 0.000000001);
 }
 
-//float getSize(vector<int> &samples) {
-//    float num = 0;
-//    for (auto i : samples) {
-//        if (i != -1) { num++; }
-//    }
-//    return num;
-//}
-
-//float computeEntropy(vector<int> &samples, Data &Data) {
-//    float trueProb = computeTargetProb(samples, Data);
-//    return -1 * (trueProb * log2(trueProb)
-//                 + (1 - trueProb) * log2((1 - trueProb)));
-//}
-
 float computeGini(int& sideTrue, int& sideSize) {
     float trueProb = (sideTrue * 1.0) / (sideSize + 0.00000001);
     return (1 - trueProb * trueProb - (1 - trueProb) * (1 - trueProb));
 }
 
-//float computeInformationGain(vector<int> &samples,
-//                              vector<int> &pSamplesLeft,
-//                              vector<int> &pSamplesRight,
-//                              Data &Data) {
-//    return -1 * computeEntropy(samples, Data)
-//           + ( getSize(pSamplesLeft) / getSize(samples))
-//             * computeEntropy(pSamplesLeft, Data)
-//           + (getSize(pSamplesRight) / getSize(samples))
-//             * computeEntropy(pSamplesRight, Data);
-//}
-
-float computeGiniIndex(int& leftTrue, int& leftSize,
-                        int& rightTrue, int& rightSize) {
+float computeGiniIndex(int& leftTrue,int& leftSize,
+                        int& rightTrue, int& rightSize) 
+{
     float leftProb = (leftSize * 1.0) / (leftSize + rightSize);
     float rightprob = (rightSize * 1.0) / (leftSize + rightSize);
     return leftProb * computeGini(leftTrue, leftSize)
@@ -114,7 +90,6 @@ void sortByFeatures(int* pSampleFeatVecIdx, float* pSamplesFeaturesVec, int samp
         pSamplesFeaturesVec[i] = data.readFeature(pSampleFeatVecIdx[i], featureIndex);
     }
     quickSortWithIdx(pSamplesFeaturesVec, pSampleFeatVecIdx, 0, sampleVectorSize - 1);
-
 }
 
 void DecisionTree::chooseBestSplitFeatures(Node* pNode,
@@ -143,7 +118,7 @@ void DecisionTree::chooseBestSplitFeatures(Node* pNode,
 
     for (auto featureIndex : featuresVec) 
     {
-        sortByFeatures(sampleVectorIdx, sampleVector, samplesTrueNum, featureIndex, Data);
+        sortByFeatures(sampleVectorIdx, sampleVector, samplesSize, featureIndex, Data);
 
         int leftSize = 0, rightSize = samplesSize;
         int leftTrue = 0, rightTrue = samplesTrueNum;

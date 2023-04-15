@@ -13,13 +13,13 @@ static void swap(int *pA, int *pB)
 
 static void swap(float *pA, float *pB, int *pIdxA, int *pIdxB)
 {
-    int temp = *pA;
+    float temp = *pA;
     *pA = *pB;
     *pB = temp;
 
-    temp = *pIdxA;
+    int tempIdx = *pIdxA;
     *pIdxA = *pIdxB;
-    *pIdxB = temp;
+    *pIdxB = tempIdx;
 }
 
 void randomize(int arr[], int n)
