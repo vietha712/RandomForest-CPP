@@ -14,18 +14,18 @@
 
 using namespace std;
 
-double computeTargetProb(vector<int> &samplesVec, Data &Data);
+float computeTargetProb(vector<int> &samplesVec, Data &Data);
 
-//double computeEntropy(vector<int> &samples, Data &Data);
+//float computeEntropy(vector<int> &samples, Data &Data);
 
-double computeGini(int &, int &);
+float computeGini(int &, int &);
 
-//double computeInformationGain(vector<int> &samples,
+//float computeInformationGain(vector<int> &samples,
 //                              vector<int> &samplesLeft,
 //                              vector<int> &samplesRight,
 //                              Data &Data);
 
-double computeGiniIndex(int &, int &, int &, int &);
+float computeGiniIndex(int &, int &, int &, int &);
 
 int _sqrt(int num);
 
@@ -39,10 +39,10 @@ private:
         int featureIndex;
         shared_ptr<Node> left;
         shared_ptr<Node> right;
-        double threshold;
+        float threshold;
         bool isLeaf;
         int depth;
-        double prob;
+        float prob;
 
         Node() {
             left = nullptr;
@@ -56,15 +56,15 @@ private:
     int minSamplesSplit;
     int minSamplesLeaf;
     int sampleNum;
-    function<double(int&, int&, int&, int&)> criterionFunc;
+    function<float(int&, int&, int&, int&)> criterionFunc;
     function<int(int)> maxFeatureFunc;
     shared_ptr<Node> root;
 
-    set<double> getValuesRange(int &featureIndex,
+    set<float> getValuesRange(int &featureIndex,
                                vector<int> &samplesVec,
                                Data &Data);
 
-    void splitSamplesVec(int &featureIndex, double &threshold,
+    void splitSamplesVec(int &featureIndex, float &threshold,
                          vector<int> &samplesVec, vector<int> &samplesLeft,
                          vector<int> &samplesRight, Data &Data);
 
@@ -103,9 +103,9 @@ public:
 
     void fit(Data &trainData);
 
-    double computeProb(int sampleIndex, Data &Data);
+    float computeProb(int sampleIndex, Data &Data);
 
-    void predictProba(Data &Data, vector<double> &results);
+    void predictProba(Data &Data, vector<float> &results);
 };
 
 #endif //RANDOMFOREST_DECISIONTREE_H

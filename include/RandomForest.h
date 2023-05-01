@@ -21,7 +21,24 @@ private:
     int eachTreeSamplesNum;
     int nJobs;
 
-    void norm(vector<double> &total);
+    struct measurement
+    {
+        unsigned int falsePositive;
+        unsigned int truePositive;
+        unsigned int falseNegative;
+        unsigned int trueNegative;
+        float accuracy;
+        float recall;
+        float precision;
+        float f1Score;
+        float falsePositiveRate;
+        float truePositiveRate;
+        float falseNegativeRate;
+        float trueNegativeRate;
+    };
+    measurement measurementRecords;
+
+    void norm(vector<float> &total);
 
 public:
     /**
@@ -60,7 +77,18 @@ public:
 
     void fit(Data &trainData);
 
-    vector<double> predictProba(Data &Data);
+    vector<float> predictProba(Data &Data);
+    void predict(Data &Data, vector<int> &predictedValue);
+
+    void calculateMetrics(Data &testData, vector<int> &predictedValue);
+    float getAccuracy(void);
+    float getRecall(void);
+    float getPrecision(void);
+    float getF1Score(void);
+    float getFPR(void);
+    float getFNR(void);
+    float getTPR(void);
+    float getTNR(void);
 };
 
 #endif //RANDOMFOREST_RANDOMFOREST_H

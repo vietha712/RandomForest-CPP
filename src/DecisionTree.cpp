@@ -12,8 +12,8 @@ int computeTure(vector<int> &samplesVec, Data &Data) {
     return total;
 }
 
-double computeTargetProb(vector<int> &samplesVec, Data &Data) {
-    double num = 0;
+float computeTargetProb(vector<int> &samplesVec, Data &Data) {
+    float num = 0;
     int total = 0;
     for (auto i : samplesVec) {
         if (i != -1) {
@@ -24,26 +24,26 @@ double computeTargetProb(vector<int> &samplesVec, Data &Data) {
     return num / (total + 0.000000001);
 }
 
-double getSize(vector<int> &samples) {
-    double num = 0;
+float getSize(vector<int> &samples) {
+    float num = 0;
     for (auto i : samples) {
         if (i != -1) { num++; }
     }
     return num;
 }
 
-//double computeEntropy(vector<int> &samples, Data &Data) {
-//    double trueProb = computeTargetProb(samples, Data);
+//float computeEntropy(vector<int> &samples, Data &Data) {
+//    float trueProb = computeTargetProb(samples, Data);
 //    return -1 * (trueProb * log2(trueProb)
 //                 + (1 - trueProb) * log2((1 - trueProb)));
 //}
 
-double computeGini(int& sideTrue, int& sideSize) {
-    double trueProb = (sideTrue * 1.0) / (sideSize + 0.00000001);
+float computeGini(int& sideTrue, int& sideSize) {
+    float trueProb = (sideTrue * 1.0) / (sideSize + 0.00000001);
     return (1 - trueProb * trueProb - (1 - trueProb) * (1 - trueProb));
 }
 
-//double computeInformationGain(vector<int> &samples,
+//float computeInformationGain(vector<int> &samples,
 //                              vector<int> &samplesLeft,
 //                              vector<int> &samplesRight,
 //                              Data &Data) {
@@ -54,10 +54,10 @@ double computeGini(int& sideTrue, int& sideSize) {
 //             * computeEntropy(samplesRight, Data);
 //}
 
-double computeGiniIndex(int& leftTrue, int& leftSize,
+float computeGiniIndex(int& leftTrue, int& leftSize,
                         int& rightTrue, int& rightSize) {
-    double leftProb = (leftSize * 1.0) / (leftSize + rightSize);
-    double rightprob = (rightSize * 1.0) / (leftSize + rightSize);
+    float leftProb = (leftSize * 1.0) / (leftSize + rightSize);
+    float rightprob = (rightSize * 1.0) / (leftSize + rightSize);
     return leftProb * computeGini(leftTrue, leftSize)
            + rightprob * computeGini(rightTrue, rightSize);
 }
@@ -74,10 +74,10 @@ int _none(int num) {
     return num;
 }
 
-set<double> DecisionTree::getValuesRange(int &featureIndex,
+set<float> DecisionTree::getValuesRange(int &featureIndex,
                                          vector<int> &samplesVec,
                                          Data &Data) {
-    set<double> featureRange;
+    set<float> featureRange;
     for (auto sampleIndex : samplesVec) {
         featureRange.insert(
                 Data.readFeature(sampleIndex, featureIndex));
@@ -85,7 +85,7 @@ set<double> DecisionTree::getValuesRange(int &featureIndex,
     return featureRange;
 }
 
-void DecisionTree::splitSamplesVec(int &featureIndex, double &threshold,
+void DecisionTree::splitSamplesVec(int &featureIndex, float &threshold,
                                    vector<int> &samplesVec,
                                    vector<int> &samplesLeft,
                                    vector<int> &samplesRight, Data &Data) {
@@ -101,16 +101,17 @@ void DecisionTree::splitSamplesVec(int &featureIndex, double &threshold,
     }
 }
 
-void sortByFeatures(vector<pair<int, double>>& samplesFeaturesVec,
+void sortByFeatures(vector<pair<int, float>>& samplesFeaturesVec, int sampleVectorSize,
                     int featureIndex, Data& data) {
     for (int i = 0; i < samplesFeaturesVec.size(); i++) {
         samplesFeaturesVec[i].second
                 = data.readFeature(samplesFeaturesVec[i].first, featureIndex);
     }
-    sort(samplesFeaturesVec.begin(), samplesFeaturesVec.end(), [](pair<int,
-    double>& a, pair<int, double>& b) {
-        return a.second < b.second;
-    });
+
+    sort(samplesFeaturesVec.begin(), samplesFeaturesVec.end(), [](pair<int, float>& a, pair<int, float>& b)
+                                                               {
+                                                                   return a.second < b.second;
+                                                               });
 }
 
 void DecisionTree::chooseBestSplitFeatures(shared_ptr<Node> &node,
@@ -119,17 +120,17 @@ void DecisionTree::chooseBestSplitFeatures(shared_ptr<Node> &node,
     vector<int> featuresVec = Data.generateFeatures(this->maxFeatureFunc);
     int bestFeatureIndex = featuresVec[0];
     int samplesTrueNum = computeTure(samplesVec, Data);
-    double minValue = 1000000000, bestThreshold = 0;
-    double threshold = 0;
+    float minValue = 1000000000, bestThreshold = 0;
+    float threshold = 0;
     int sampleIndex;
-    vector<pair<int, double>> samplesFeaturesVec;
+    vector<pair<int, float>> samplesFeaturesVec;
     samplesFeaturesVec.reserve(samplesVec.size());
     for (auto index : samplesVec) {
         samplesFeaturesVec.emplace_back(index, 0);
     }
 
     for (auto featureIndex : featuresVec) {
-        sortByFeatures(samplesFeaturesVec, featureIndex, Data);
+        sortByFeatures(samplesFeaturesVec, samplesTrueNum, featureIndex, Data);
         int leftSize = 0, rightSize = (int)samplesVec.size();
         int leftTrue = 0, rightTrue = samplesTrueNum;
         for (int index = 0; index < samplesFeaturesVec.size();) {
@@ -147,7 +148,7 @@ void DecisionTree::chooseBestSplitFeatures(shared_ptr<Node> &node,
                 sampleIndex = samplesFeaturesVec[index].first;
             }
             if (index == samplesVec.size()) { continue; }
-            double value = criterionFunc(leftTrue, leftSize, rightTrue, rightSize);
+            float value = criterionFunc(leftTrue, leftSize, rightTrue, rightSize);
             if (value <= minValue) {
                 minValue = value;
                 bestThreshold = threshold;
@@ -163,7 +164,7 @@ shared_ptr<DecisionTree::Node>
 DecisionTree::constructNode(vector<int> &samplesVec,
                             Data &trainData,
                             int depth) {
-    double targetProb = computeTargetProb(samplesVec, trainData);
+    float targetProb = computeTargetProb(samplesVec, trainData);
     shared_ptr<Node> node(new Node());
     node->depth = depth;
     node->prob = 0;
@@ -223,7 +224,7 @@ void DecisionTree::fit(Data &trainData) {
     root = constructNode(samplesVec, trainData, 0);
 }
 
-double DecisionTree::computeProb(int sampleIndex, Data &Data) {
+float DecisionTree::computeProb(int sampleIndex, Data &Data) {
     auto node = root;
     while (!node->isLeaf) {
         if (Data.readFeature(sampleIndex, node->featureIndex) >
@@ -236,7 +237,7 @@ double DecisionTree::computeProb(int sampleIndex, Data &Data) {
     return node->prob;
 }
 
-void DecisionTree::predictProba(Data &Data, vector<double> &results) {
+void DecisionTree::predictProba(Data &Data, vector<float> &results) {
     for (int i = 0; i < results.size(); i++) {
         results[i] += computeProb(i, Data);
     }

@@ -24,7 +24,7 @@ vector<string> splitBySpace(string &sentence);
 
 class Data {
 private:
-    vector<vector<double>> features;
+    vector<vector<float>> features;
     vector<int> target;
     int featureSize = 0;
     int samplesSize = 0;
@@ -36,8 +36,8 @@ public:
     Data(bool isTrain = true, int size = 1719692, int featuresSize = 201);
 
     void read(const string &filename);
-
-    double readFeature(int sampleIndex, int featureIndex);
+    void read(const string &filename, vector<int> &idx);
+    float readFeature(int sampleIndex, int featureIndex);
 
     int readTarget(int sampleIndex);
 
@@ -52,7 +52,7 @@ public:
     void sortByFeature(vector<int> &samplesVec, int featureIndex);
 };
 
-void writeDataToCSV(vector<double> &results,
+void writeDataToCSV(vector<float> &results,
                     Data &data,
                     const string &filename,
                     bool train);
